@@ -1,85 +1,322 @@
-#-*-coding:utf-8-*-
-import matlab.engine
-import os
-import shutil
+from PyQt5.QtWidgets import  *
 import sys
-class Mlab:
-    #jobname='testall'
-    #jenkinsdir='C:/Users/s981325/.jenkins/workspace/'
-    #dir = jenkinsdir+jobname+'/Controller/'
-    #dir=Mlab.jenkinsdir+Mlab.jobname+'/TestScript/'
-    def __init__(self,model,modelfile,jobname,workspace):
-        self.model=model
-        self.modelfile=modelfile
-        self.jobname=jobname
-        self.workspace=workspace
+
+import shutil
+
+from openui import Ui_MainWindow
+
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
+import  os
+import  re
+
+import time
+import TestOperation
+import matlab.engine
+import createcase
+import xlrd
+
+from openpyxl import load_workbook
+from threading import Thread
+
+class EmittingStr(QObject):
+    textWritten = pyqtSignal(str) #定义一个发送str的信号
+    def write(self, text):
+      self.textWritten.emit(str(text))
+
+class Oprate(QThread):
+    sig = pyqtSignal()
+    def __init__(self, parent=None):
+        super(Oprate, self).__init__(parent)
+    def run(self):
+        self.sig.emit()
 
 
-    def platform(self):
 
 
-        eng = matlab.engine.start_matlab("-desktop")
-        self.WriteTempM()
-        eng.temp(nargout=0)
-        #eng.addpath(os.getcwd())
-        eng.addpath(self.workspace)
-        eng.addpath(self.workspace+r'\Confiuration')
-        eng.addpath(self.workspace + r'\Confiuration\Enum')
-        eng.cd(self.workspace)
-        myDIC=eng.Simulink.data.dictionary.open(self.model+'_DataDictionary.sldd')
-        dDataSectObj = eng.getSection(myDIC, 'Design Data')
-        eng.exportToFile(dDataSectObj, 'myDictionaryDesignData.m',nargout=0)
-        #eng.aqaq(nargout=0)
-        eng.myDictionaryDesignData(nargout=0)
 
-        #eng.uiopen(os.path.join(self.workspace,self.model),1,nargout=0)
-        '''try:
-            os.rename(os.path.join(self.workspace, self.model+'_DataDictionaryManagement.m'), os.path.join(self.workspace, 'runDIC.m'))
-            eng.myDictionaryDesignData(nargout=0)
-            os.rename(os.path.join(os.path.join(self.workspace, 'runDIC.m')),os.path.join(self.workspace, self.model + '_DataDictionaryManagement.m'))
+
+class basePage(QMainWindow,Ui_MainWindow):
+    def __init__(self):
+        super(basePage, self).__init__()
+        self.setupUi(self)
+        self.Select_btn.clicked.connect(self.SelectModelAndInitMatlab)
+
+        self.Init_btn.toggle()
+
+        self.Init_btn.clicked.connect(lambda :self.CheckBtn(1))
+        self.Static_btn.clicked.connect(lambda :self.CheckBtn(2))
+        self.InitCase_btn.clicked.connect(lambda :self.CheckBtn(3))
+        self.GerCase_btn.clicked.connect(lambda :self.CheckBtn(4))
+        self.barlabel = QLabel()
+        self.statusBar.addPermanentWidget(self.barlabel)
+        sys.stdout = EmittingStr(textWritten=self.outputWritten)
+        self.Oprate=Oprate()
+        self.Oprate.sig.connect(self.InitModel)
+        self.creatcases=createcase.Ui_MainWindow()
+        self.eng = matlab.engine.start_matlab()
+        self.barlabel.setText('未选择模型' )
+
+
+
+    def ChooseProDir(self):
+        dir=QFileDialog.getExistingDirectory()
+        dir=dir.replace('/','\\')
+        #self.ProjectName_2.setText(dir)
+        self.LibrP=dir
+
+        if dir=='':
+
+            sys.exit(0)
+
+
+
+        #self.eng = matlab.engine.start_matlab('-desktop')
+            #self.adds(dir,self.child0)
+        #a.initUI()
+    def SelectModelAndInitMatlab(self):
+        dir1, file1 = QFileDialog.getOpenFileName(filter="*.slx")
+
+        (filepath, tempfilename) = os.path.split(dir1)
+        (filename, extension) = os.path.splitext(tempfilename)
+        dir = filepath.replace('/', '\\')
+        #self.Libr=os.path.
+        self.modelname=filename[4:]
+        if filename!="":
+            self.barlabel.setText('选择的模型是：'+filename)
+            self.TO = TestOperation.Mlab(filename, dir, self.eng,self.LibrP)
+
+
+    def CheckBtn(self,num):
+        self.Select_btn.setEnabled(False)
+        self.Init_btn.setEnabled(False)
+        self.Static_btn.setEnabled(False)
+        self.InitCase_btn.setEnabled(False)
+        self.GerCase_btn.setEnabled(False)
+        if num==1:
+            self.Num=1
+            t = Thread(target=self.InitModel)
+            t.start()
+        elif num==2:
+            t = Thread(target=self.StaticCheck)
+            t.start()
+            self.Num=2
+        elif num==3:
+            t = Thread(target=self.InitCase)
+            t.start()
+            self.Num=3
+        elif num==4:
+            #t = Thread(target=self.GerCases)
+            #t.start()
+            self.GerCases()
+            self.Num=4
+
+    def CheckNum(self):
+        if self.Num==1:
+            self.InitModel()
+            self.Num = 0
+        elif self.Num==2:
+            self.StaticCheck()
+            self.Num = 0
+        elif self.Num==3:
+            self.InitCase()
+            self.Num = 0
+        elif self.Num==4:
+            self.GerCases()
+            self.Num=0
+
+    def InitModel(self):
+        try:
+            if self.barlabel.text()=="" :
+                print("未选择模型！")
+            else:
+                print("初始化开始！")
+                self.TO.platform()
+
+                self.TO.InitM()
+                print("初始化成功！")
+
+            self.Select_btn.setEnabled(True)
+            self.Init_btn.setEnabled(True)
+            self.Static_btn.setEnabled(True)
+            self.InitCase_btn.setEnabled(True)
+            self.GerCase_btn.setEnabled(True)
+
         except:
-            eng.runDIC(nargout=0)
-            os.rename(os.path.join(os.path.join(self.workspace, 'runDIC.m')),os.path.join(self.workspace, self.model + '_DataDictionaryManagement.m'))'''
-        #eng.open_system(os.path.join(self.workspace,self.model),'loadonly',nargout=0)
-        eng.open_system(os.path.join(self.workspace, self.model), nargout=0)
+            print("初始化失败！请从err.log查看具体错误信息！")
+            self.Select_btn.setEnabled(True)
+            self.Init_btn.setEnabled(True)
+            self.Static_btn.setEnabled(True)
+            self.InitCase_btn.setEnabled(True)
+            self.GerCase_btn.setEnabled(True)
 
-        #eng.addpath(r'D:\工作\工作\脚本\matlab+python\Mode_MIlTest(2019-10-24) (根据已有模型提取)\Test_Model\SWC_SMG_DchaCtl\Confiuration')
+    def StaticCheck(self):
+        try:
 
-        eng.cd('D:\工作\工作\脚本\matlab+python\Mode_MIlTest(2019-10-24) (根据已有模型提取)')
-        eng.T01_Init(nargout=0)
-        #这里的名字是自己选择的
+            self.TO.StaticCheck()
+            self.Select_btn.setEnabled(True)
+            self.Init_btn.setEnabled(True)
+            self.Static_btn.setEnabled(True)
+            self.InitCase_btn.setEnabled(True)
+            self.GerCase_btn.setEnabled(True)
+            print("静态测试成功！")
+        except:
+            print("静态测试失败！请从err.log查看具体错误信息！")
+            self.Select_btn.setEnabled(True)
+            self.Init_btn.setEnabled(True)
+            self.Static_btn.setEnabled(True)
+            self.InitCase_btn.setEnabled(True)
+            self.GerCase_btn.setEnabled(True)
 
-        #eng.uiwait(a,nargout=0)
-        #eng.T02_a_Extract(self.model,self.model+'/RE_'+self.model[4:]+'_10ms_sys/'+self.model[4:]+'_10ms',self.model[4:]+'_10ms',nargout=0)
-        eng.T02_a_Extract(nargout=0)
-        eng.T02_b_ExtractParam(nargout=0)
-        eng.T03_StdCheck(nargout=0)
-        eng.T04_SLDVCheck(nargout=0)
+    def InitCase(self):
+        try:
+            self.TO.InitCase()
+            self.Select_btn.setEnabled(True)
+            self.Init_btn.setEnabled(True)
+            self.Static_btn.setEnabled(True)
+            self.InitCase_btn.setEnabled(True)
+            self.GerCase_btn.setEnabled(True)
+            print("初始化模板成功！")
+        except:
+            print("初始化模板失败！请从err.log查看具体错误信息！")
+            self.Select_btn.setEnabled(True)
+            self.Init_btn.setEnabled(True)
+            self.Static_btn.setEnabled(True)
+            self.InitCase_btn.setEnabled(True)
+            self.GerCase_btn.setEnabled(True)
 
-        #eng.SWC_SMG_DchaCtl_DataDictionaryManagement(nargout=0)
-        #print (1)
+    def GerCases(self):
+        try:
+
+            self.di = QMainWindow()
+
+            self.creatUI = self.creatcases
+
+            self.creatUI.setupUi(self.di)
+
+            self.creatUI.pushButton.clicked.connect(self.WriteXlSX)
+
+            a,b=self.readXLSX()
+            print(a)
+
+            if a=='a':
+                print('找不到测试用例模板')
+                self.Select_btn.setEnabled(True)
+                self.Init_btn.setEnabled(True)
+                self.Static_btn.setEnabled(True)
+                self.InitCase_btn.setEnabled(True)
+                self.GerCase_btn.setEnabled(True)
+            #b=['1','2','3']
+            else:
+                self.creatUI.comboBox.clear()
+
+                self.creatUI.comboBox_2.clear()
+                self.creatUI.comboBox.addItems(a)
+                self.creatUI.comboBox_2.addItems(b)
+
+                self.di.show()
+                self.Select_btn.setEnabled(True)
+                self.Init_btn.setEnabled(True)
+                self.Static_btn.setEnabled(True)
+                self.InitCase_btn.setEnabled(True)
+                self.GerCase_btn.setEnabled(True)
+        except:
+                self.Select_btn.setEnabled(True)
+                self.Init_btn.setEnabled(True)
+                self.Static_btn.setEnabled(True)
+                self.InitCase_btn.setEnabled(True)
+                self.GerCase_btn.setEnabled(True)
+
+    def readXLSX(self):
+
+        #list = os.listdir(os.path.join(os.getcwd(), 'testLibrary/UnitTest/'))
+        list = os.listdir( self.LibrP+'/UnitTest/')
+
+        #workbook1111 = xlrd.open_workbook(os.path.join(os.getcwd(),'1.'))
+        self.PATH=""
+        for i in list:
+
+            if self.modelname[4:] in i:
+                #list2 = os.listdir(os.path.join(os.getcwd(), 'testLibrary/UnitTest/' + i))
+                list2 = os.listdir( self.LibrP+'/UnitTest/' + i)
+                for j in list2:
+                    if '001_Spec.xlsx' in j and "~$"not in j:
+                        #path=os.path.join(os.getcwd(), 'testLibrary/UnitTest/' + i)
+                        path = self.LibrP+'/UnitTest/' + i
+                        self.PATH=path+'/'+j
+                        #print(self.PATH)
+
+                        workbook1=xlrd.open_workbook(filename=self.PATH)
+        if self.PATH!="":
+            sheet = workbook1.sheets()[0]
+
+            #sheet = workbook1.sheet_by_name(name)
+            row = sheet.row_values(1)
+            row1=sheet.row_values(0)
+            n=0
+            signales=[]
+            self.singalesDIC={}
+            for k1 in row1:
+                if k1=='Input':
+                    n=n+1
+            self.N=10+n
+            for k in range(11,11+n-1):
+                print(row[k])
+                signales.append(row[k])
+                self.singalesDIC[row[k]]=k
+
+            col=sheet.col_values(10)
+            self.colDIC={}
+            times=[]
+            print(col)
+            for k3 in range(1,len(col)):
+                if isinstance(col[k3],float):
+
+                    times.append(str(col[k3]))
+                    self.colDIC[col[k3]]=k3
+
+            workbook1.release_resources()
+            print(signales,times)
+            return signales,times
+        else:
+            return "a",'b'
+
+    def WriteXlSX(self):
+
+        i=self.creatUI.comboBox.currentIndex()
+        txt=self.creatUI.comboBox.itemText(i)
+        j = self.creatUI.comboBox_2.currentIndex()
+        txt1 = self.creatUI.comboBox_2.itemText(j)
+        inputVal=self.creatUI.inputVal.text()
+        exVal=self.creatUI.expVal.text()
+        if inputVal=="" or exVal=="":
+            QMessageBox.about(self, "消息", "输入值或期望值为空！")
+        else:
+            '''workbook = xlrd.open_workbook(self.PATH)
+            workbooknew = copy(workbook)
+            ws = workbooknew.get_sheet(0)'''
+            len(self.singalesDIC)
+            tempp = re.split('.xlsx', self.PATH)[0]
+            temp = tempp + '_' + txt + '.xlsx'
+            if os.path.exists(temp):
+                pass
+            else:
+                shutil.copyfile(self.PATH,temp)
+            wb = load_workbook(temp)
+            wb1 = wb.active
+            #print(self.colDIC[float(txt1)], self.singalesDIC[txt])
+            wb1.cell(self.colDIC[float(txt1)]+1, self.singalesDIC[txt]+1, inputVal)
+            wb1.cell(self.colDIC[float(txt1)]+1, self.N+1, exVal)
+            '''wb.write(self.colDIC[float(txt1)], self.singalesDIC[txt], self.creatUI.inputVal.text())
+            wb.write(self.colDIC[float(txt1)], self.N, self.creatUI.expVal.text())'''
+
+            wb.save(temp)
+            print('填入'+txt+"在"+txt1+"时刻的值为："+inputVal+"   期望值为："+exVal)
 
 
-
-        eng.quit()
-
-    def OpenModel(self,eng,path):
-        eng.ModelAdvisor.run(self.model, 'configuration', self.workspace + '/jenkins/standardCheck.mat')
-
-    def WriteTempM(self):
-        f=open('temp.m','w')
-        txtt='global topMdName\nglobal subsystemPathName\nglobal subsystemName\n'
-        f.write(txtt)
-        txt="topMdName='"+self.model+"';"
-        f.write(txt)
-        f.write('\n')
-        txt2="subsystemPathName='"+self.model+'/RE_'+self.model[4:]+'_10ms_sys/'+self.model[4:]+'_10ms'+"';"
-        f.write(txt2)
-        f.write('\n')
-        txt3="subsystemName='"+self.model[4:]+'_10ms'+"';"
-        f.write(txt3)
-        f.write('\n')
-        f.close()
-
-a=Mlab('SWC_SMG_DchaCtl',1,1,r'D:\工作\工作\脚本\matlab+python\Mode_MIlTest(2019-10-24) (根据已有模型提取)\Test_Model\SWC_SMG_DchaCtl')
-a.platform()
+    def outputWritten(self, text):
+        cursor = self.textBrowser.textCursor()
+        cursor.movePosition(QTextCursor.End)
+        cursor.insertText(text)
+        self.textBrowser.setTextCursor(cursor)
+        self.textBrowser.ensureCursorVisible()
