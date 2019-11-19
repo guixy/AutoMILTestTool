@@ -153,6 +153,14 @@ class Mlab:
 
     def GenerateCases(self):
         a=1
+    def StartTest(self):
+        print("开始运行T07_a_CreateHarness")
+        self.eng.T07_a_CreateHarness(nargout=0)
+        print("开始运行T07_aex_MergeHarness")
+        self.eng.T07_aex_MergeHarness(nargout=0)
+        print("开始运行T07_b_RunUnitTest")
+        self.eng.T07_b_RunUnitTest(nargout=0)
+        print("结束运行T07_b_RunUnitTest")
 #a=Mlab('SWC_SMG_DchaCtl',r'D:\工作\工作\脚本\matlab+python\Mode_MIlTest(2019-10-24) (根据已有模型提取)\Test_Model\SWC_SMG_DchaCtl')
 #a.testa()
 '''a.platform()

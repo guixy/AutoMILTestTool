@@ -48,6 +48,7 @@ class basePage(QMainWindow,Ui_MainWindow):
         self.Static_btn.clicked.connect(lambda :self.CheckBtn(2))
         self.InitCase_btn.clicked.connect(lambda :self.CheckBtn(3))
         self.GerCase_btn.clicked.connect(lambda :self.CheckBtn(4))
+        self.Start_btn.clicked.connect(lambda :self.CheckBtn(5))
         self.barlabel = QLabel()
         self.statusBar.addPermanentWidget(self.barlabel)
         sys.stdout = EmittingStr(textWritten=self.outputWritten)
@@ -93,6 +94,7 @@ class basePage(QMainWindow,Ui_MainWindow):
         self.Static_btn.setEnabled(False)
         self.InitCase_btn.setEnabled(False)
         self.GerCase_btn.setEnabled(False)
+        self.Start_btn.setEnabled(False)
         if num==1:
             self.Num=1
             t = Thread(target=self.InitModel)
@@ -110,6 +112,10 @@ class basePage(QMainWindow,Ui_MainWindow):
             #t.start()
             self.GerCases()
             self.Num=4
+        elif num==5:
+            t = Thread(target=self.StartTestCase)
+            t.start()
+
 
     def CheckNum(self):
         if self.Num==1:
@@ -141,14 +147,19 @@ class basePage(QMainWindow,Ui_MainWindow):
             self.Static_btn.setEnabled(True)
             self.InitCase_btn.setEnabled(True)
             self.GerCase_btn.setEnabled(True)
+            self.Start_btn.setEnabled(True)
 
-        except:
+
+        except Exception as e:
             print("初始化失败！请从err.log查看具体错误信息！")
+            print(str(e))
+
             self.Select_btn.setEnabled(True)
             self.Init_btn.setEnabled(True)
             self.Static_btn.setEnabled(True)
             self.InitCase_btn.setEnabled(True)
             self.GerCase_btn.setEnabled(True)
+            self.Start_btn.setEnabled(True)
 
     def StaticCheck(self):
         try:
@@ -159,14 +170,17 @@ class basePage(QMainWindow,Ui_MainWindow):
             self.Static_btn.setEnabled(True)
             self.InitCase_btn.setEnabled(True)
             self.GerCase_btn.setEnabled(True)
+            self.Start_btn.setEnabled(True)
             print("静态测试成功！")
-        except:
+        except Exception as e:
             print("静态测试失败！请从err.log查看具体错误信息！")
+            print(str(e))
             self.Select_btn.setEnabled(True)
             self.Init_btn.setEnabled(True)
             self.Static_btn.setEnabled(True)
             self.InitCase_btn.setEnabled(True)
             self.GerCase_btn.setEnabled(True)
+            self.Start_btn.setEnabled(True)
 
     def InitCase(self):
         try:
@@ -176,14 +190,17 @@ class basePage(QMainWindow,Ui_MainWindow):
             self.Static_btn.setEnabled(True)
             self.InitCase_btn.setEnabled(True)
             self.GerCase_btn.setEnabled(True)
+            self.Start_btn.setEnabled(True)
             print("初始化模板成功！")
-        except:
+        except Exception as e:
             print("初始化模板失败！请从err.log查看具体错误信息！")
+            print(str(e))
             self.Select_btn.setEnabled(True)
             self.Init_btn.setEnabled(True)
             self.Static_btn.setEnabled(True)
             self.InitCase_btn.setEnabled(True)
             self.GerCase_btn.setEnabled(True)
+            self.Start_btn.setEnabled(True)
 
     def GerCases(self):
         try:
@@ -197,7 +214,7 @@ class basePage(QMainWindow,Ui_MainWindow):
             self.creatUI.pushButton.clicked.connect(self.WriteXlSX)
 
             a,b=self.readXLSX()
-            print(a)
+
 
             if a=='a':
                 print('找不到测试用例模板')
@@ -206,6 +223,7 @@ class basePage(QMainWindow,Ui_MainWindow):
                 self.Static_btn.setEnabled(True)
                 self.InitCase_btn.setEnabled(True)
                 self.GerCase_btn.setEnabled(True)
+                self.Start_btn.setEnabled(True)
             #b=['1','2','3']
             else:
                 self.creatUI.comboBox.clear()
@@ -220,12 +238,35 @@ class basePage(QMainWindow,Ui_MainWindow):
                 self.Static_btn.setEnabled(True)
                 self.InitCase_btn.setEnabled(True)
                 self.GerCase_btn.setEnabled(True)
-        except:
+                self.Start_btn.setEnabled(True)
+        except Exception as e:
+                print(str(e))
                 self.Select_btn.setEnabled(True)
                 self.Init_btn.setEnabled(True)
                 self.Static_btn.setEnabled(True)
                 self.InitCase_btn.setEnabled(True)
                 self.GerCase_btn.setEnabled(True)
+                self.Start_btn.setEnabled(True)
+    def StartTestCase(self):
+        try:
+            self.eng.cd(self.LibrP)
+            self.TO.StartTest()
+            self.Select_btn.setEnabled(True)
+            self.Init_btn.setEnabled(True)
+            self.Static_btn.setEnabled(True)
+            self.InitCase_btn.setEnabled(True)
+            self.GerCase_btn.setEnabled(True)
+            self.Start_btn.setEnabled(True)
+            print("Harness测试成功！")
+        except Exception as e:
+            print("Harness测试失败！请从err.log查看具体错误信息！")
+            print(str(e))
+            self.Select_btn.setEnabled(True)
+            self.Init_btn.setEnabled(True)
+            self.Static_btn.setEnabled(True)
+            self.InitCase_btn.setEnabled(True)
+            self.GerCase_btn.setEnabled(True)
+            self.Start_btn.setEnabled(True)
 
     def readXLSX(self):
 
@@ -253,6 +294,7 @@ class basePage(QMainWindow,Ui_MainWindow):
             #sheet = workbook1.sheet_by_name(name)
             row = sheet.row_values(1)
             row1=sheet.row_values(0)
+
             n=0
             signales=[]
             self.singalesDIC={}
@@ -261,22 +303,37 @@ class basePage(QMainWindow,Ui_MainWindow):
                     n=n+1
             self.N=10+n
             for k in range(11,11+n-1):
-                print(row[k])
+
                 signales.append(row[k])
                 self.singalesDIC[row[k]]=k
 
             col=sheet.col_values(10)
             self.colDIC={}
             times=[]
-            print(col)
+
             for k3 in range(1,len(col)):
                 if isinstance(col[k3],float):
 
                     times.append(str(col[k3]))
                     self.colDIC[col[k3]]=k3
 
+            col2=sheet.col_values(0)
+            needSig=[]
+            '''for k4 in range(2,len(col2)):
+                if col2[k4]!="":
+
+                    needSig.append(col2[4])
+            if needSig :
+                print(222222)
+                self.AddNeedSig(needSig)'''
+
+
+
+
+
             workbook1.release_resources()
-            print(signales,times)
+
+
             return signales,times
         else:
             return "a",'b'
@@ -296,24 +353,44 @@ class basePage(QMainWindow,Ui_MainWindow):
             workbooknew = copy(workbook)
             ws = workbooknew.get_sheet(0)'''
             len(self.singalesDIC)
-            tempp = re.split('.xlsx', self.PATH)[0]
-            temp = tempp + '_' + txt + '.xlsx'
-            if os.path.exists(temp):
+            #tempp = re.split('.xlsx', self.PATH)[0]
+            temp = self.PATH
+            '''if os.path.exists(temp):
                 pass
             else:
-                shutil.copyfile(self.PATH,temp)
+                shutil.copyfile(self.PATH,temp)'''
             wb = load_workbook(temp)
             wb1 = wb.active
             #print(self.colDIC[float(txt1)], self.singalesDIC[txt])
-            wb1.cell(self.colDIC[float(txt1)]+1, self.singalesDIC[txt]+1, inputVal)
-            wb1.cell(self.colDIC[float(txt1)]+1, self.N+1, exVal)
+            wb1.cell(self.colDIC[float(txt1)]+1, self.singalesDIC[txt]+1, float(inputVal))
+            wb1.cell(self.colDIC[float(txt1)]+1, self.N+1, float(exVal))
             '''wb.write(self.colDIC[float(txt1)], self.singalesDIC[txt], self.creatUI.inputVal.text())
             wb.write(self.colDIC[float(txt1)], self.N, self.creatUI.expVal.text())'''
 
             wb.save(temp)
             print('填入'+txt+"在"+txt1+"时刻的值为："+inputVal+"   期望值为："+exVal)
 
+    def AddNeedSig(self,sigs):
+        labelnames=locals()
+        horizonLay=locals()
+        layout=locals()
+        for i in range(0,len(sigs)):
+            #exec('self.btn{} = {}'.format(i, QLabel()))
+            layout['self.creatUI.layoutWidget'+str(i)] = QWidget(self.creatUI.scrollArea)
+            layout['self.creatUI.layoutWidget' + str(i)].setGeometry(QRect(10, 140, 751, 31))
+            layout['self.creatUI.layoutWidget' + str(i)].setObjectName("layoutWidget"+str(i))
 
+            horizonLay['self.creatUI.horizontalLayout'+str(i)] = QHBoxLayout(layout['self.creatUI.layoutWidget' + str(i)])
+            horizonLay['self.creatUI.horizontalLayout' + str(i)].setContentsMargins(0, 0, 0, 0)
+            horizonLay['self.creatUI.horizontalLayout' + str(i)].setObjectName("horizontalLayout"+str(i))
+            labelnames['self.creatUI.label%s' +str(i)] = QLabel(layout['self.creatUI.layoutWidget' + str(i)])
+            labelnames['self.creatUI.label%s' +str(i)].setObjectName("label"+str(i))
+            horizonLay['self.creatUI.horizontalLayout' + str(i)].addWidget(labelnames['self.creatUI.label'+str(i)])
+            labelnames['self.creatUI.label'+str(i)].setText( "信号：")
+
+            #self.sig_label = QLabel()
+
+            #self.creatUI.scrollArea.addPermanentWidget(self.btn_i)
     def outputWritten(self, text):
         cursor = self.textBrowser.textCursor()
         cursor.movePosition(QTextCursor.End)
