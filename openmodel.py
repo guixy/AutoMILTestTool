@@ -203,7 +203,7 @@ class basePage(QMainWindow,Ui_MainWindow):
             self.Start_btn.setEnabled(True)
 
     def GerCases(self):
-        try:
+        #try:
 
             self.di = QMainWindow()
 
@@ -239,8 +239,8 @@ class basePage(QMainWindow,Ui_MainWindow):
                 self.InitCase_btn.setEnabled(True)
                 self.GerCase_btn.setEnabled(True)
                 self.Start_btn.setEnabled(True)
-        except Exception as e:
-                print(str(e))
+        #except Exception as e:
+                #print(str(e))
                 self.Select_btn.setEnabled(True)
                 self.Init_btn.setEnabled(True)
                 self.Static_btn.setEnabled(True)
@@ -318,14 +318,16 @@ class basePage(QMainWindow,Ui_MainWindow):
                     self.colDIC[col[k3]]=k3
 
             col2=sheet.col_values(0)
-            needSig=[]
-            '''for k4 in range(2,len(col2)):
+
+            '''needSig=[]
+            for k4 in range(2,len(col2)):
                 if col2[k4]!="":
 
-                    needSig.append(col2[4])
+                    needSig.append(col2[k4])
             if needSig :
-                print(222222)
+                print(needSig)
                 self.AddNeedSig(needSig)'''
+
 
 
 
@@ -359,34 +361,87 @@ class basePage(QMainWindow,Ui_MainWindow):
                 pass
             else:
                 shutil.copyfile(self.PATH,temp)'''
+            #temp='D:\工作\工作\脚本\matlab+python\dist\XMiMatlGerTest/aaa.xlsx'
             wb = load_workbook(temp)
             wb1 = wb.active
+
             #print(self.colDIC[float(txt1)], self.singalesDIC[txt])
             wb1.cell(self.colDIC[float(txt1)]+1, self.singalesDIC[txt]+1, float(inputVal))
             wb1.cell(self.colDIC[float(txt1)]+1, self.N+1, float(exVal))
             '''wb.write(self.colDIC[float(txt1)], self.singalesDIC[txt], self.creatUI.inputVal.text())
             wb.write(self.colDIC[float(txt1)], self.N, self.creatUI.expVal.text())'''
 
-            wb.save(temp)
+            wb.save(temp[:len(temp)-5]+'a.xlsx')
+
+            #shutil.copyfile(temp,temp[:len(temp)-4]+'zip')
+            #shutil.copyfile(temp[:len(temp )-4] + 'zip',temp )
+            #os.rename(temp,temp[:len(temp)-4]+'_templat.zip')
+            os.remove(temp)
+            os.rename(temp[:len(temp)-5]+'a.xlsx',temp)
             print('填入'+txt+"在"+txt1+"时刻的值为："+inputVal+"   期望值为："+exVal)
 
     def AddNeedSig(self,sigs):
         labelnames=locals()
         horizonLay=locals()
-        layout=locals()
+        linetext = locals()
+        linetext1=locals()
+        linetext2 = locals()
+        linetext3 = locals()
+        linetext4 = locals()
+        linetext5 = locals()
+        layout=QGridLayout(self.creatUI.scrollArea)
+        label1=QLabel("误差")
+        label2 = QLabel("变化率上限")
+        label3 = QLabel("变化率下限")
+        label4 = QLabel("最大值")
+        label5 = QLabel("最小值")
+        layout.addWidget(label1, 0, 1)
+        layout.addWidget(label2, 0, 2)
+        layout.addWidget(label3, 0, 3)
+        layout.addWidget(label4, 0, 4)
+        layout.addWidget(label5, 0, 5)
+        layout.setSpacing(10)
+        sigs=["5","","4","3","2","1"]
         for i in range(0,len(sigs)):
             #exec('self.btn{} = {}'.format(i, QLabel()))
-            layout['self.creatUI.layoutWidget'+str(i)] = QWidget(self.creatUI.scrollArea)
-            layout['self.creatUI.layoutWidget' + str(i)].setGeometry(QRect(10, 140, 751, 31))
-            layout['self.creatUI.layoutWidget' + str(i)].setObjectName("layoutWidget"+str(i))
+            '''layout['self.layoutWidget'+str(i)] = QWidget(self.creatUI.scrollArea)
+            layout['self.layoutWidget' + str(i)].setGeometry(QRect(10, 140, 751, 31))
+            layout['self.layoutWidget' + str(i)].setObjectName("layoutWidget"+str(i))
+            horizonLay['self.creatUI.horizontalLayout' + str(i)] = QHBoxLayout(self.creatUI.scrollArea)
+            horizonLay['self.creatUI.horizontalLayout' + str(i)].setContentsMargins(0, 0, 0, 0)
+            horizonLay['self.creatUI.horizontalLayout' + str(i)].setObjectName("horizontalLayout" + str(i))'''
 
-            horizonLay['self.creatUI.horizontalLayout'+str(i)] = QHBoxLayout(layout['self.creatUI.layoutWidget' + str(i)])
+            labelnames['self.label'+str(i)]=QLabel(sigs[i])
+            linetext['self.btn1'+str(i)]=QLineEdit()
+            linetext['self.btn2' + str(i)] = QLineEdit()
+            linetext['self.btn3' + str(i)] = QLineEdit()
+            linetext['self.btn4' + str(i)] = QLineEdit()
+            linetext['self.btn5' + str(i)] = QLineEdit()
+
+            layout.addWidget(labelnames['self.label'+str(i)], i + 1, 0)
+            layout.addWidget(linetext['self.btn1' + str(i)], i + 1, 1)
+            layout.addWidget(linetext['self.btn2' + str(i)], i + 1, 2)
+            layout.addWidget(linetext['self.btn3' + str(i)], i + 1, 3)
+            layout.addWidget(linetext['self.btn4' + str(i)], i + 1, 4)
+            layout.addWidget(linetext['self.btn5' + str(i)], i + 1, 5)
+
+
+            #horizonLay['self.creatUI.horizontalLayout' + str(i)].addWidget(labelnames['self.label' + str(i)])
+            '''horizonLay['self.creatUI.horizontalLayout'+str(i)] = QHBoxLayout(layout['self.creatUI.layoutWidget' + str(i)])
             horizonLay['self.creatUI.horizontalLayout' + str(i)].setContentsMargins(0, 0, 0, 0)
             horizonLay['self.creatUI.horizontalLayout' + str(i)].setObjectName("horizontalLayout"+str(i))
-            labelnames['self.creatUI.label%s' +str(i)] = QLabel(layout['self.creatUI.layoutWidget' + str(i)])
-            labelnames['self.creatUI.label%s' +str(i)].setObjectName("label"+str(i))
-            horizonLay['self.creatUI.horizontalLayout' + str(i)].addWidget(labelnames['self.creatUI.label'+str(i)])
-            labelnames['self.creatUI.label'+str(i)].setText( "信号：")
+            self.label11 = QLabel(layout['self.creatUI.layoutWidget' + str(i)])
+            self.label11.setObjectName("label")
+            self.label11.setText('1212312312')'''
+            #horizonLay['self.creatUI.horizontalLayout' + str(i)].addWidget(self.label)
+
+
+
+            '''labelnames['self.creatUI.label' +str(i)] = QLabel(layout['self.creatUI.layoutWidget' + str(i)])
+            labelnames['self.creatUI.label' +str(i)].setObjectName("label"+str(i))
+            labelnames['self.creatUI.label' + str(i)].setText("信号：")
+            horizonLay['self.creatUI.horizontalLayout' + str(i)].addWidget(labelnames['self.creatUI.label'+str(i)])'''
+
 
             #self.sig_label = QLabel()
 

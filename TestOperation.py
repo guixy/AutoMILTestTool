@@ -82,9 +82,11 @@ class Mlab:
                     c=b[1]
                     #print(i+'/'+b[3:len(b)-5])
                     if len(b)==3:
+
                         if 'Subsystem' in i  or c[3:len(c)-5] in b[2]:
                             tem=i
                             tem2=b[2]
+
             txtt='global topMdName\nglobal subsystemPathName\nglobal subsystemName\n'
             f.write(txtt)
             txt="topMdName='"+self.model+"';"
