@@ -203,7 +203,7 @@ class basePage(QMainWindow,Ui_MainWindow):
             self.Start_btn.setEnabled(True)
 
     def GerCases(self):
-        #try:
+        try:
 
             self.di = QMainWindow()
 
@@ -212,6 +212,9 @@ class basePage(QMainWindow,Ui_MainWindow):
             self.creatUI.setupUi(self.di)
 
             self.creatUI.pushButton.clicked.connect(self.WriteXlSX)
+            self.creatUI.pushButton_2.clicked.connect(self.Save)
+
+
 
             a,b=self.readXLSX()
 
@@ -239,8 +242,8 @@ class basePage(QMainWindow,Ui_MainWindow):
                 self.InitCase_btn.setEnabled(True)
                 self.GerCase_btn.setEnabled(True)
                 self.Start_btn.setEnabled(True)
-        #except Exception as e:
-                #print(str(e))
+        except Exception as e:
+                print(str(e))
                 self.Select_btn.setEnabled(True)
                 self.Init_btn.setEnabled(True)
                 self.Static_btn.setEnabled(True)
@@ -288,6 +291,10 @@ class basePage(QMainWindow,Ui_MainWindow):
                         #print(self.PATH)
 
                         workbook1=xlrd.open_workbook(filename=self.PATH)
+        self.tempfile = self.PATH[:len(self.PATH) - 5] + 'a.xlsx'
+
+
+
         if self.PATH!="":
             sheet = workbook1.sheets()[0]
 
@@ -316,20 +323,19 @@ class basePage(QMainWindow,Ui_MainWindow):
 
                     times.append(str(col[k3]))
                     self.colDIC[col[k3]]=k3
-
+            #self.time=times
             col2=sheet.col_values(0)
 
-            '''needSig=[]
+            needSig=[]
             for k4 in range(2,len(col2)):
                 if col2[k4]!="":
 
                     needSig.append(col2[k4])
             if needSig :
-                print(needSig)
-                self.AddNeedSig(needSig)'''
 
-
-
+                self.sigs=needSig
+                self.AddNeedSig(needSig)
+                self.AddExp(needSig,times)
 
 
 
@@ -347,9 +353,9 @@ class basePage(QMainWindow,Ui_MainWindow):
         j = self.creatUI.comboBox_2.currentIndex()
         txt1 = self.creatUI.comboBox_2.itemText(j)
         inputVal=self.creatUI.inputVal.text()
-        exVal=self.creatUI.expVal.text()
-        if inputVal=="" or exVal=="":
-            QMessageBox.about(self, "消息", "输入值或期望值为空！")
+        #exVal=self.creatUI.expVal.text()
+        if inputVal=="" :
+            QMessageBox.about(self, "消息", "输入值为空！")
         else:
             '''workbook = xlrd.open_workbook(self.PATH)
             workbooknew = copy(workbook)
@@ -362,25 +368,29 @@ class basePage(QMainWindow,Ui_MainWindow):
             else:
                 shutil.copyfile(self.PATH,temp)'''
             #temp='D:\工作\工作\脚本\matlab+python\dist\XMiMatlGerTest/aaa.xlsx'
-            wb = load_workbook(temp)
+            if os.path.exists(self.tempfile):
+                wb = load_workbook(self.tempfile)
+            else:
+                wb = load_workbook(self.PATH)
             wb1 = wb.active
 
             #print(self.colDIC[float(txt1)], self.singalesDIC[txt])
             wb1.cell(self.colDIC[float(txt1)]+1, self.singalesDIC[txt]+1, float(inputVal))
-            wb1.cell(self.colDIC[float(txt1)]+1, self.N+1, float(exVal))
+            #wb1.cell(self.colDIC[float(txt1)]+1, self.N+1, float(exVal))
             '''wb.write(self.colDIC[float(txt1)], self.singalesDIC[txt], self.creatUI.inputVal.text())
             wb.write(self.colDIC[float(txt1)], self.N, self.creatUI.expVal.text())'''
 
-            wb.save(temp[:len(temp)-5]+'a.xlsx')
+            wb.save(self.tempfile)
 
             #shutil.copyfile(temp,temp[:len(temp)-4]+'zip')
             #shutil.copyfile(temp[:len(temp )-4] + 'zip',temp )
             #os.rename(temp,temp[:len(temp)-4]+'_templat.zip')
-            os.remove(temp)
-            os.rename(temp[:len(temp)-5]+'a.xlsx',temp)
-            print('填入'+txt+"在"+txt1+"时刻的值为："+inputVal+"   期望值为："+exVal)
+            #os.remove(temp)
+            #os.rename(temp[:len(temp)-5]+'a.xlsx',temp)
+            #print('填入'+txt+"在"+txt1+"时刻的值为："+inputVal+"   期望值为："+exVal)
+            print('填入' + txt + "在" + txt1 + "时刻的值为：" + inputVal )
 
-    def AddNeedSig(self,sigs):
+    def AddNeedSig1(self,sigs):
         labelnames=locals()
         horizonLay=locals()
         linetext = locals()
@@ -446,6 +456,95 @@ class basePage(QMainWindow,Ui_MainWindow):
             #self.sig_label = QLabel()
 
             #self.creatUI.scrollArea.addPermanentWidget(self.btn_i)
+
+    def AddNeedSig(self,sigs):
+        #sigs = ["5", "22", "4", "3", "2", "1"]
+        self.table1=QTableWidget(len(sigs),5)
+        # TODO 优化 2 设置水平方向表格为自适应的伸缩模式
+        self.table1.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.table1.setHorizontalHeaderLabels(['误差', '变化率上限', '变化率下限','最大值','最小值'])
+        #table.setFixedWidth(700)
+        #for i in sigs:
+
+        self.table1.setVerticalHeaderLabels(sigs)
+        '''for i in range(0,len(sigs)):
+            newItem1 = QLineEdit()
+            table.setCellWidget(i, 0, newItem1)
+            newItem2 = QLineEdit()
+            table.setCellWidget(i, 1, newItem2)
+            newItem3 = QLineEdit()
+            table.setCellWidget(i, 2, newItem3)
+            newItem4 = QLineEdit()
+            table.setCellWidget(i, 3, newItem4)
+            newItem5 = QLineEdit()
+            table.setCellWidget(i, 4, newItem5)'''
+        self.creatUI.scrollArea.setWidget(self.table1)
+    def AddExp(self,sigs,times):
+        #sigs=['1','2','2']
+        self.table2 = QTableWidget(len(sigs), 4)
+        self.table2.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.table2.setHorizontalHeaderLabels(['期望信号', '时刻', '期望值',""])
+
+        cb = QComboBox()
+
+        cb.addItems(times)
+        self.table2.setSpan(0, 1, len(sigs), 1)
+        self.table2.setCellWidget(0, 1, cb)
+
+        for i in range(0,len(sigs)):
+
+            newItem = QTableWidgetItem(sigs[i])
+            self.table2.setItem(i,0,newItem)
+            #num = QTableWidgetItem('0')
+            #table.setItem(i,2,num)
+
+            self.table2.setSpan(0,3,len(sigs),1)
+        self.btnexp=QPushButton()
+        self.btnexp.setText("确定")
+        self.table2.setCellWidget(0,3,self.btnexp)
+        self.btnexp.clicked.connect(self.WritrEXP)
+        self.creatUI.scrollArea_2.setWidget(self.table2)
+
+    def WritrEXP(self):
+        if os.path.exists(self.tempfile):
+            wb = load_workbook(self.tempfile)
+        else:
+            wb = load_workbook(self.PATH)
+        wb1 = wb.active
+        for ii in range(0,len(self.sigs)):
+            exp = self.table2.item(ii,2)
+            txt1=self.table2.cellWidget(0, 1).currentIndex()
+            txt1=self.table2.cellWidget(0,1).itemText(txt1)
+            if exp:
+                expVal=exp.text()
+                wb1.cell(self.colDIC[float(txt1)] + 1, self.N + 1+ii, float(expVal))
+                print('填入信号'+self.sigs[ii]  + "在" + txt1 + "时刻的值为：" + expVal )
+        wb.save(self.tempfile)
+            #else:
+                #QMessageBox.about(self, "消息", "为空！")
+            #print(self.table2.cellWidget(ii,1).currentIndex())
+    def Save(self):
+        if os.path.exists(self.tempfile):
+            wb = load_workbook(self.tempfile)
+            wb1 = wb.active
+            for ii in range(0, len(self.sigs)):
+                for jj in range(0,5):
+                    valnum = self.table1.item(ii,jj)
+                    if valnum:
+                        val=valnum.text()
+                        wb1.cell(3 + ii,  2+ jj, float(val))
+                    else:
+                        QMessageBox.about(self, "消息", "请输入必填部分数值！")
+                        break
+            wb.save(self.tempfile)
+            os.remove(self.PATH)
+            os.rename(self.tempfile,self.PATH)
+
+
+        else:
+           pass
+        self.di.close()
+
     def outputWritten(self, text):
         cursor = self.textBrowser.textCursor()
         cursor.movePosition(QTextCursor.End)
