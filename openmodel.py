@@ -539,8 +539,6 @@ class basePage(QMainWindow,Ui_MainWindow):
             wb.save(self.tempfile)
             os.remove(self.PATH)
             os.rename(self.tempfile,self.PATH)
-
-
         else:
            pass
         self.di.close()
